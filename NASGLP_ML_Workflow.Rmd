@@ -65,13 +65,30 @@ Our goal is to see if we can predict phyllosilicate composition with our geochem
 
 And our geochemical elements of interest are: A_Al,A_Ca, A_Fe, A_K, A_Mg, A_Na
 
-Going to select our predictors and extract coordinates first 
+Going to select our response annd predictor variables and extract coordinates first. 
+
+I am going to create 3 models - one to predict A_tot_10A, one to predict A_Tot_14A, and one to predict A_kaolinite. 
 
 ```{r}
 
-head(NASGLP_USA_2007)
+coords_data <- NASGLP_USA_2007[,c("Longitude","Latitude")]
+
+data_10A <- NASGLP_USA_2007 %>%
+  select(A_Al,A_Ca,A_Fe,A_K,A_Mg,A_Na,A_Tot_10A)
+
+data_14A <- data_10A <- NASGLP_USA_2007 %>%
+  select(A_Al,A_Ca,A_Fe,A_K,A_Mg,A_Na,A_Tot_14A)
+
+data_kaolin <- data_10A <- NASGLP_USA_2007 %>%
+  select(A_Al,A_Ca,A_Fe,A_K,A_Mg,A_Na,A_Kaolinit)
+
+
 
 
 ```
 
+
+```{r}
+
+```
 
