@@ -1,0 +1,75 @@
+---
+title: "NASGLP - predicting mineralogy"
+output: html_document
+date: "2026-03-25"
+---
+
+
+Packages Needed
+
+```{r Packages needed, message=FALSE, warning =FALSE}
+
+# spatial packages 
+library(terra)
+library(sp)
+library(sf)
+library(rnaturalearth)
+library(tidyterra)
+library(sf)
+library(spatstat)
+library(mapview)
+
+# general vis and data tidying 
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(cowplot)
+library(viridis)
+library(scales)
+library(CHNOSZ)
+library(RNetCDF)
+library(stringr)
+
+```
+
+First let's read in NASGLP data. Only 2007 data has QXRD data, so we are leaving the 2004 pilot data out. 
+
+```{r setup, include=FALSE}
+NASGLP_USA_2007 <- read.csv("C:/Users/lmw63/OneDrive - Yale University/Carbon-DOE_Synthesis/NASGLP_ML/NASGLP_ML_Workflow/Appendix_3a_Ahorizon_18Sept2013_NASGLP_2007.csv",skip = 12)   
+# remove extra top row 
+NASGLP_USA_2007 <- NASGLP_USA_2007[-1, , drop = FALSE]
+# add a dataset ID
+NASGLP_USA_2007$DatasetID <- "NASGLP_USA_2007"
+
+
+# For the NAGLP_USA_2007 dataset, need to: 
+  # 1) string replace all the NAs and Ns entries, and make columns of interest numerics 
+  # 2) Filter for measurements with no carbonates detected 
+  # 3) Select columns that we want, which include: ID, State/Province ID, Lat, Long, Depth, Total C, Organic C, and Dataset ID 
+  # 4) Name these columnds the same thing as the NASGLP USA 2004 dataset 
+
+
+NASGLP_USA_2007$A_C_tot <- str_replace_all(NASGLP_USA_2007$A_C_Tot,c("N.S."="NA", "N.D."=0.02)) 
+NASGLP_USA_2007$A_C_org <- str_replace_all(NASGLP_USA_2007$A_C_Org, c("N.S."="NA", "N.D."=0)) 
+NASGLP_USA_2007$A_C_Inorg <- str_replace_all(NASGLP_USA_2007$A_C_Inorg,c("N.S."="NA", "N.D."=0)) 
+NASGLP_USA_2007$A_C_Inorg <-as.numeric(NASGLP_USA_2007$A_C_Inorg)
+NASGLP_USA_2007$A_C_tot <- as.numeric(NASGLP_USA_2007$A_C_Tot) 
+NASGLP_USA_2007$A_C_org <- as.numeric(NASGLP_USA_2007$A_C_Org) 
+
+
+```
+
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
