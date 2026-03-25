@@ -30,11 +30,14 @@ library(CHNOSZ)
 library(RNetCDF)
 library(stringr)
 
+#ML packages 
+library(mlr3)
+
 ```
 
 First let's read in NASGLP data. Only 2007 data has QXRD data, so we are leaving the 2004 pilot data out. 
 
-```{r setup, include=FALSE}
+```{r,warning =FALSE}
 NASGLP_USA_2007 <- read.csv("C:/Users/lmw63/OneDrive - Yale University/Carbon-DOE_Synthesis/NASGLP_ML/NASGLP_ML_Workflow/Appendix_3a_Ahorizon_18Sept2013_NASGLP_2007.csv",skip = 12)   
 # remove extra top row 
 NASGLP_USA_2007 <- NASGLP_USA_2007[-1, , drop = FALSE]
@@ -58,18 +61,17 @@ NASGLP_USA_2007$A_C_org <- as.numeric(NASGLP_USA_2007$A_C_Org)
 
 
 ```
+Our goal is to see if we can predict phyllosilicate composition with our geochemical elements of interest. The phyllosilicates of interest are: A_Tot_10A (Micas), A_Tot_14A (Expandable clays), A_Kaolinit (Our favorite 1:1)
+
+And our geochemical elements of interest are: A_Al,A_Ca, A_Fe, A_K, A_Mg, A_Na
+
+Going to select our predictors and extract coordinates first 
+
+```{r}
+
+head(NASGLP_USA_2007)
 
 
-```{r cars}
-summary(cars)
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
