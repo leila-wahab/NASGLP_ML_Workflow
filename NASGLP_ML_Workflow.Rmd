@@ -32,7 +32,8 @@ library(stringr)
 
 #ML packages 
 library(mlr3)
-
+library(mlr)
+library(ParamHelpers)
 ```
 
 First let's read in NASGLP data. Only 2007 data has QXRD data, so we are leaving the 2004 pilot data out. 
@@ -55,10 +56,31 @@ NASGLP_USA_2007$DatasetID <- "NASGLP_USA_2007"
 NASGLP_USA_2007$A_C_tot <- str_replace_all(NASGLP_USA_2007$A_C_Tot,c("N.S."="NA", "N.D."=0.02)) 
 NASGLP_USA_2007$A_C_org <- str_replace_all(NASGLP_USA_2007$A_C_Org, c("N.S."="NA", "N.D."=0)) 
 NASGLP_USA_2007$A_C_Inorg <- str_replace_all(NASGLP_USA_2007$A_C_Inorg,c("N.S."="NA", "N.D."=0)) 
+# ND based on minimum detection limit based on metadata
+NASGLP_USA_2007$A_Al <- str_replace_all(NASGLP_USA_2007$A_Al,c("N.S."="NA", "N.D."=0.01)) 
+NASGLP_USA_2007$A_Ca <- str_replace_all(NASGLP_USA_2007$A_Ca,c("N.S."="NA", "N.D."=0.01)) 
+NASGLP_USA_2007$A_Fe <- str_replace_all(NASGLP_USA_2007$A_Fe,c("N.S."="NA", "N.D."=0.01)) 
+NASGLP_USA_2007$A_K <- str_replace_all(NASGLP_USA_2007$A_K,c("N.S."="NA", "N.D."=0.01)) 
+NASGLP_USA_2007$A_Mg <- str_replace_all(NASGLP_USA_2007$A_Mg,c("N.S."="NA", "N.D."=0.01)) 
+NASGLP_USA_2007$A_Na <- str_replace_all(NASGLP_USA_2007$A_Na,c("N.S."="NA", "N.D."=0.01)) 
+
+NASGLP_USA_2007$A_Tot_10A <- str_replace_all(NASGLP_USA_2007$A_Tot_10A,c("N.S."="NA", "N.D."=0.02)) 
+NASGLP_USA_2007$A_Tot_14A <- str_replace_all(NASGLP_USA_2007$A_Tot_14A,c("N.S."="NA", "N.D."=0.02)) 
+NASGLP_USA_2007$A_Kaolinit <- str_replace_all(NASGLP_USA_2007$A_Kaolinit,c("N.S."="NA", "N.D."=0.02)) 
+
 NASGLP_USA_2007$A_C_Inorg <-as.numeric(NASGLP_USA_2007$A_C_Inorg)
 NASGLP_USA_2007$A_C_tot <- as.numeric(NASGLP_USA_2007$A_C_Tot) 
 NASGLP_USA_2007$A_C_org <- as.numeric(NASGLP_USA_2007$A_C_Org) 
 
+NASGLP_USA_2007$A_Al <- as.numeric(NASGLP_USA_2007$A_Al)
+NASGLP_USA_2007$A_Ca <- as.numeric(NASGLP_USA_2007$A_Ca)
+NASGLP_USA_2007$A_Fe <- as.numeric(NASGLP_USA_2007$A_Fe)
+NASGLP_USA_2007$A_K <- as.numeric(NASGLP_USA_2007$A_K)
+NASGLP_USA_2007$A_Mg <- as.numeric(NASGLP_USA_2007$A_Mg)
+NASGLP_USA_2007$A_Na <- as.numeric(NASGLP_USA_2007$A_Na)
+NASGLP_USA_2007$A_Tot_10A <- as.numeric(NASGLP_USA_2007$A_Tot_10A)
+NASGLP_USA_2007$A_Tot_14A <- as.numeric(NASGLP_USA_2007$A_Tot_14A)
+NASGLP_USA_2007$A_Kaolinit <- as.numeric(NASGLP_USA_2007$A_Kaolinit)
 
 ```
 Our goal is to see if we can predict phyllosilicate composition with our geochemical elements of interest. The phyllosilicates of interest are: A_Tot_10A (Micas), A_Tot_14A (Expandable clays), A_Kaolinit (Our favorite 1:1)
@@ -71,15 +93,18 @@ I am going to create 3 models - one to predict A_tot_10A, one to predict A_Tot_1
 
 ```{r}
 
-coords_data <- NASGLP_USA_2007[,c("Longitude","Latitude")]
+NASGLP_clean <- NASGLP_USA_2007 %>%
+  drop_na(A_Tot_10A,A_Tot_14A,A_Kaolinit,A_Al,A_Ca,A_Fe,A_K,A_Mg,A_Na)
 
-data_10A <- NASGLP_USA_2007 %>%
+coords_data <- NASGLP_clean[,c("Longitude","Latitude")]
+
+data_10A <- NASGLP_clean %>%
   select(A_Al,A_Ca,A_Fe,A_K,A_Mg,A_Na,A_Tot_10A)
 
-data_14A <- data_10A <- NASGLP_USA_2007 %>%
+data_14A  <- NASGLP_clean %>%
   select(A_Al,A_Ca,A_Fe,A_K,A_Mg,A_Na,A_Tot_14A)
 
-data_kaolin <- data_10A <- NASGLP_USA_2007 %>%
+data_kaolin  <- NASGLP_clean %>%
   select(A_Al,A_Ca,A_Fe,A_K,A_Mg,A_Na,A_Kaolinit)
 
 
@@ -87,8 +112,156 @@ data_kaolin <- data_10A <- NASGLP_USA_2007 %>%
 
 ```
 
+We are going to create out regression tasks 
 
 ```{r}
 
+task_10A <- makeRegrTask(data=data_10A,target = "A_Tot_10A", coordinates = coords_data)
+
+task_14A <- makeRegrTask(data=data_14A,target = "A_Tot_14A", coordinates = coords_data)
+
+task_kaolin <- makeRegrTask(data=data_kaolin,target = "A_Kaolinit", coordinates = coords_data)
+
+
+
 ```
+
+Create learner 
+
+```{r}
+
+lrn_rf <- makeLearner(cl="regr.ranger",predict.type = "response")
+
+```
+
+
+Specify resampling
+
+
+```{r}
+
+tune_level <- makeResampleDesc("SpCV",iters=5)
+```
+
+Specify number of random search
+
+```{r}
+
+ctrl <- makeTuneControlRandom(maxit = 50L)
+
+```
+
+Search for hyperparamters done 50x in each spatially disjoint partition, which takes spatial bias into account 
+
+```{r}
+
+ps_10A <- ParamHelpers::makeParamSet(
+makeIntegerParam("mtry", lower = 1, upper = ncol(data_10A) - 1),
+makeNumericParam("sample.fraction", lower = 0.2, upper = 0.9),
+makeIntegerParam("min.node.size", lower = 1, upper = 10))
+
+ps_14A <- ParamHelpers::makeParamSet(
+makeIntegerParam("mtry", lower = 1, upper = ncol(data_14A) - 1),
+makeNumericParam("sample.fraction", lower = 0.2, upper = 0.9),
+makeIntegerParam("min.node.size", lower = 1, upper = 10))
+
+ps_kaolinit <- ParamHelpers::makeParamSet(
+makeIntegerParam("mtry", lower = 1, upper = ncol(data_kaolin) - 1),
+makeNumericParam("sample.fraction", lower = 0.2, upper = 0.9),
+makeIntegerParam("min.node.size", lower = 1, upper = 10))
+
+
+```
+
+Tuning for 10A prediction model:
+
+```{r}
+
+tune_10A <- tuneParams(learner=lrn_rf,
+                       task= task_10A,
+                       resampling = tune_level,
+                       par.set=ps_10A,
+                       control=ctrl,
+                       measures=mlr::rmse)
+
+```
+
+
+```{r}
+
+set.seed(42)
+lrn_rf_10A <- setHyperPars(makeLearner("regr.ranger",predict.type = "response"),
+                           par.vals = tune_10A$x)
+
+set.seed(42)
+model_rf_10A <- train(lrn_rf_10A,task_10A)
+
+getLearnerModel(model_rf_10A)
+
+```
+
+
+
+Tuning for 14A prediction model: 
+
+```{r}
+
+tune_14A <- tuneParams(learner=lrn_rf,
+                       task= task_14A,
+                       resampling = tune_level,
+                       par.set=ps_14A,
+                       control=ctrl,
+                       measures=mlr::rmse)
+
+
+```
+
+
+
+```{r}
+
+set.seed(42)
+lrn_rf_14A <- setHyperPars(makeLearner("regr.ranger",predict.type = "response"),
+                           par.vals = tune_14A$x)
+
+set.seed(42)
+model_rf_14A <- train(lrn_rf_14A,task_14A)
+
+getLearnerModel(model_rf_14A)
+
+
+```
+
+Tuning for kaolinite prediction model: 
+
+```{r}
+
+tune_kaolin <- tuneParams(learner=lrn_rf,
+                       task= task_kaolin,
+                       resampling = tune_level,
+                       par.set=ps_kaolinit,
+                       control=ctrl,
+                       measures=mlr::rmse)
+
+```
+
+
+
+```{r}
+
+
+
+set.seed(42)
+lrn_rf_kaolin <- setHyperPars(makeLearner("regr.ranger",predict.type = "response"),
+                           par.vals = tune_kaolin$x)
+
+set.seed(42)
+model_rf_kaolin <- train(lrn_rf_kaolin,task_kaolin)
+
+getLearnerModel(model_rf_kaolin)
+
+
+```
+
+
 
