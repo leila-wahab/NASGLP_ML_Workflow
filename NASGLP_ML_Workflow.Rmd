@@ -34,6 +34,7 @@ library(stringr)
 library(mlr3)
 library(mlr)
 library(ParamHelpers)
+library(pdp)
 ```
 
 First let's read in NASGLP data. Only 2007 data has QXRD data, so we are leaving the 2004 pilot data out. 
@@ -112,7 +113,7 @@ data_kaolin  <- NASGLP_clean %>%
 
 ```
 
-We are going to create out regression tasks 
+We are going to create our regression tasks 
 
 ```{r}
 
@@ -126,16 +127,22 @@ task_kaolin <- makeRegrTask(data=data_kaolin,target = "A_Kaolinit", coordinates 
 
 ```
 
-Create learner 
+Create learner. The learner determines the statistical learning method to use. In this case, regr.ranger corresponds to Random Forest 
+
 
 ```{r}
+
+# Cl is the class of learner. More learner types here: 
+# https://mlr.mlr-org.com/articles/tutorial/integrated_learners.html
+# Two main prediction types: response and probability 
+
 
 lrn_rf <- makeLearner(cl="regr.ranger",predict.type = "response")
 
 ```
 
 
-Specify resampling
+Specify resampling. Specified five fold spatial cross validation. We only have two steps here: specificying a resampling method and running it. 
 
 
 ```{r}
@@ -143,7 +150,7 @@ Specify resampling
 tune_level <- makeResampleDesc("SpCV",iters=5)
 ```
 
-Specify number of random search
+Specify number of random search. Will be run within each spatially disjoint partition. 
 
 ```{r}
 
@@ -151,7 +158,7 @@ ctrl <- makeTuneControlRandom(maxit = 50L)
 
 ```
 
-Search for hyperparamters done 50x in each spatially disjoint partition, which takes spatial bias into account 
+Search for hyperparamters done 50x in each spatially disjoint partition, which takes spatial bias into account. In this step we are just setting up the parameters. 
 
 ```{r}
 
@@ -175,6 +182,7 @@ makeIntegerParam("min.node.size", lower = 1, upper = 10))
 
 Tuning for 10A prediction model:
 
+We need to include the learner, the task/data, the resampling methodology, the iterations for our random search, and measures of error.The optimally tuned parameters will then be the basis for our hyperparamters 
 ```{r}
 
 tune_10A <- tuneParams(learner=lrn_rf,
@@ -185,6 +193,7 @@ tune_10A <- tuneParams(learner=lrn_rf,
                        measures=mlr::rmse)
 
 ```
+
 
 
 ```{r}
@@ -264,4 +273,172 @@ getLearnerModel(model_rf_kaolin)
 ```
 
 
+Building partial dependence plots:
+
+10 angstrom clays
+
+```{r}
+
+RF_10A <- ranger::ranger(formula = A_Tot_10A~A_Al+A_Ca+A_Fe+A_K+A_Mg+A_Na,
+                 data = data_10A, mtry=tune_10A$x$mtry,
+                 min.node.size = tune_10A$x$min.node.size,
+                 sample.fraction = tune_10A$x$sample.fraction)
+
+pdp_Al_rf_10A <- pdp::partial(RF_10A, pred.var = "A_Al")
+pdp_Ca_rf_10A <- pdp::partial(RF_10A, pred.var = "A_Ca")
+pdp_Fe_rf_10A <- pdp::partial(RF_10A, pred.var = "A_Fe")
+pdp_K_rf_10A <- pdp::partial(RF_10A, pred.var = "A_K")
+pdp_Mg_rf_10A <- pdp::partial(RF_10A, pred.var = "A_Mg")
+pdp_Na_rf_10A <- pdp::partial(RF_10A, pred.var = "A_Na")
+
+```
+
+
+14 angstrom clays
+
+
+```{r}
+
+
+RF_14A <- ranger::ranger(formula = A_Tot_14A~A_Al+A_Ca+A_Fe+A_K+A_Mg+A_Na,
+                 data = data_14A, mtry=tune_14A$x$mtry,
+                 min.node.size = tune_14A$x$min.node.size,
+                 sample.fraction = tune_14A$x$sample.fraction)
+
+pdp_Al_rf_14A <- pdp::partial(RF_14A, pred.var = "A_Al")
+pdp_Ca_rf_14A <- pdp::partial(RF_14A, pred.var = "A_Ca")
+pdp_Fe_rf_14A <- pdp::partial(RF_14A, pred.var = "A_Fe")
+pdp_K_rf_14A <- pdp::partial(RF_14A, pred.var = "A_K")
+pdp_Mg_rf_14A <- pdp::partial(RF_14A, pred.var = "A_Mg")
+pdp_Na_rf_14A <- pdp::partial(RF_14A, pred.var = "A_Na")
+
+```
+
+
+Kaolinite
+
+```{r}
+
+RF_kaolin <- ranger::ranger(formula = A_Kaolinit~A_Al+A_Ca+A_Fe+A_K+A_Mg+A_Na,
+                 data = data_kaolin, mtry=tune_kaolin$x$mtry,
+                 min.node.size = tune_kaolin$x$min.node.size,
+                 sample.fraction = tune_kaolin$x$sample.fraction)
+
+pdp_Al_rf_kaolin <- pdp::partial(RF_kaolin, pred.var = "A_Al")
+pdp_Ca_rf_kaolin <- pdp::partial(RF_kaolin, pred.var = "A_Ca")
+pdp_Fe_rf_kaolin <- pdp::partial(RF_kaolin, pred.var = "A_Fe")
+pdp_K_rf_kaolin <- pdp::partial(RF_kaolin, pred.var = "A_K")
+pdp_Mg_rf_kaolin <- pdp::partial(RF_kaolin, pred.var = "A_Mg")
+pdp_Na_rf_kaolin <- pdp::partial(RF_kaolin, pred.var = "A_Na")
+
+```
+
+Making some nicer partial dependence plots 
+
+```{r}
+
+
+pdp_Al_10_plot <- ggplot()+
+  geom_line(data=pdp_Al_rf_10A,aes(x=A_Al,y=yhat),size=2)+
+  ylab("")+
+  theme_classic()
+
+pdp_Ca_10_plot <- ggplot()+
+  geom_line(data=pdp_Ca_rf_10A,aes(x=A_Ca,y=yhat),size=2)+
+  ylab("")+
+  theme_classic()
+
+pdp_Fe_10_plot <- ggplot()+
+  geom_line(data=pdp_Fe_rf_10A,aes(x=A_Fe,y=yhat),size=2)+
+  ylab("Predicted 10A Clays")+
+  theme_classic()
+
+pdp_K_10_plot <- ggplot()+
+  geom_line(data=pdp_K_rf_10A,aes(x=A_K,y=yhat),size=2)+
+  ylab("")+
+  theme_classic()
+
+pdp_Mg_10_plot <- ggplot()+
+  geom_line(data=pdp_Mg_rf_10A,aes(x=A_Mg,y=yhat),size=2)+
+  ylab("")+
+  theme_classic()
+
+pdp_Na_10_plot <- ggplot()+
+  geom_line(data=pdp_Na_rf_10A,aes(x=A_Na,y=yhat),size=2)+
+  ylab("")+
+  theme_classic()
+
+
+plot_grid(pdp_Fe_10_plot,pdp_Al_10_plot,pdp_Ca_10_plot,pdp_K_10_plot,pdp_Na_10_plot,nrow=1)
+
+pdp_Al_14_plot <- ggplot()+
+  geom_line(data=pdp_Al_rf_14A,aes(x=A_Al,y=yhat),size=2)+
+  ylab("")+
+  theme_classic()
+
+pdp_Ca_14_plot <- ggplot()+
+  geom_line(data=pdp_Ca_rf_14A,aes(x=A_Ca,y=yhat),size=2)+
+  ylab("")+
+  theme_classic()
+
+pdp_Fe_14_plot <- ggplot()+
+  geom_line(data=pdp_Fe_rf_14A,aes(x=A_Fe,y=yhat),size=2)+
+  ylab("Predicted 14A Clays")+
+  theme_classic()
+
+pdp_K_14_plot <- ggplot()+
+  geom_line(data=pdp_K_rf_14A,aes(x=A_K,y=yhat),size=2)+
+  ylab("")+
+  theme_classic()
+
+pdp_Mg_14_plot <- ggplot()+
+  geom_line(data=pdp_Mg_rf_14A,aes(x=A_Mg,y=yhat),size=2)+
+  ylab("")+
+  theme_classic()
+
+pdp_Na_14_plot <- ggplot()+
+  geom_line(data=pdp_Na_rf_14A,aes(x=A_Na,y=yhat),size=2)+
+  ylab("")+
+  theme_classic()
+
+plot_grid(pdp_Fe_10_plot,pdp_Al_10_plot,pdp_Ca_10_plot,pdp_K_10_plot,pdp_Na_10_plot,
+          pdp_Fe_14_plot,pdp_Al_14_plot,pdp_Ca_14_plot,pdp_K_14_plot,pdp_Na_14_plot,
+          nrow=2)
+
+
+pdp_Al_K_plot <- ggplot()+
+  geom_line(data=pdp_Al_rf_kaolin,aes(x=A_Al,y=yhat),size=2)+
+  ylab("")+
+  theme_classic()
+
+pdp_Ca_K_plot <- ggplot()+
+  geom_line(data=pdp_Ca_rf_kaolin,aes(x=A_Ca,y=yhat),size=2)+
+  ylab("")+
+  theme_classic()
+
+pdp_Fe_K_plot <- ggplot()+
+  geom_line(data=pdp_Fe_rf_kaolin,aes(x=A_Fe,y=yhat),size=2)+
+  ylab("Predicted Kaolinite")+
+  theme_classic()
+
+pdp_K_K_plot <- ggplot()+
+  geom_line(data=pdp_K_rf_kaolin,aes(x=A_K,y=yhat),size=2)+
+  ylab("")+
+  theme_classic()
+
+pdp_Mg_K_plot <- ggplot()+
+  geom_line(data=pdp_Mg_rf_kaolin,aes(x=A_Mg,y=yhat),size=2)+
+  theme_classic()
+
+pdp_Na_K_plot <- ggplot()+
+  geom_line(data=pdp_Na_rf_kaolin,aes(x=A_Na,y=yhat),size=2)+
+  ylab("")+
+  theme_classic()
+
+plot_grid(pdp_Fe_10_plot,pdp_Al_10_plot,pdp_Ca_10_plot,pdp_K_10_plot,pdp_Na_10_plot,
+          pdp_Fe_14_plot,pdp_Al_14_plot,pdp_Ca_14_plot,pdp_K_14_plot,pdp_Na_14_plot,
+          pdp_Fe_K_plot,pdp_Al_K_plot,pdp_Ca_K_plot,pdp_K_K_plot,pdp_Na_K_plot,
+          nrow=3)
+
+```
 
