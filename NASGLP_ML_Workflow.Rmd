@@ -54,24 +54,24 @@ NASGLP_USA_2007$DatasetID <- "NASGLP_USA_2007"
   # 4) Name these columnds the same thing as the NASGLP USA 2004 dataset 
 
 
-NASGLP_USA_2007$A_C_tot <- str_replace_all(NASGLP_USA_2007$A_C_Tot,c("N.S."="NA", "N.D."=0.02)) 
-NASGLP_USA_2007$A_C_org <- str_replace_all(NASGLP_USA_2007$A_C_Org, c("N.S."="NA", "N.D."=0)) 
-NASGLP_USA_2007$A_C_Inorg <- str_replace_all(NASGLP_USA_2007$A_C_Inorg,c("N.S."="NA", "N.D."=0)) 
+ 
 # ND based on minimum detection limit based on metadata
-NASGLP_USA_2007$A_Al <- str_replace_all(NASGLP_USA_2007$A_Al,c("N.S."="NA", "N.D."=0.01)) 
-NASGLP_USA_2007$A_Ca <- str_replace_all(NASGLP_USA_2007$A_Ca,c("N.S."="NA", "N.D."=0.01)) 
-NASGLP_USA_2007$A_Fe <- str_replace_all(NASGLP_USA_2007$A_Fe,c("N.S."="NA", "N.D."=0.01)) 
-NASGLP_USA_2007$A_K <- str_replace_all(NASGLP_USA_2007$A_K,c("N.S."="NA", "N.D."=0.01)) 
-NASGLP_USA_2007$A_Mg <- str_replace_all(NASGLP_USA_2007$A_Mg,c("N.S."="NA", "N.D."=0.01)) 
-NASGLP_USA_2007$A_Na <- str_replace_all(NASGLP_USA_2007$A_Na,c("N.S."="NA", "N.D."=0.01)) 
+NASGLP_USA_2007$A_Al <- str_replace_all(NASGLP_USA_2007$A_Al,c("N.S."="NA", "N.D."=0.005)) 
+NASGLP_USA_2007$A_Ca <- str_replace_all(NASGLP_USA_2007$A_Ca,c("N.S."="NA", "N.D."=0.005)) 
+NASGLP_USA_2007$A_Fe <- str_replace_all(NASGLP_USA_2007$A_Fe,c("N.S."="NA", "N.D."=0.005)) 
+NASGLP_USA_2007$A_K <- str_replace_all(NASGLP_USA_2007$A_K,c("N.S."="NA", "N.D."=0.005)) 
+NASGLP_USA_2007$A_Mg <- str_replace_all(NASGLP_USA_2007$A_Mg,c("N.S."="NA", "N.D."=0.005)) 
+NASGLP_USA_2007$A_Na <- str_replace_all(NASGLP_USA_2007$A_Na,c("N.S."="NA", "N.D."=0.005)) 
 
-NASGLP_USA_2007$A_Tot_10A <- str_replace_all(NASGLP_USA_2007$A_Tot_10A,c("N.S."="NA", "N.D."=0.02)) 
-NASGLP_USA_2007$A_Tot_14A <- str_replace_all(NASGLP_USA_2007$A_Tot_14A,c("N.S."="NA", "N.D."=0.02)) 
-NASGLP_USA_2007$A_Kaolinit <- str_replace_all(NASGLP_USA_2007$A_Kaolinit,c("N.S."="NA", "N.D."=0.02)) 
+NASGLP_USA_2007$A_Tot_10A <- str_replace_all(NASGLP_USA_2007$A_Tot_10A,c("N.S."="NA", "N.D."=0.01)) 
+NASGLP_USA_2007$A_Tot_14A <- str_replace_all(NASGLP_USA_2007$A_Tot_14A,c("N.S."="NA", "N.D."=0.01)) 
+NASGLP_USA_2007$A_Kaolinit <- str_replace_all(NASGLP_USA_2007$A_Kaolinit,c("N.S."="NA", "N.D."=0.01)) 
+#NASGLP_USA_2007$A_Quartz <- str_replace_all(NASGLP_USA_2007$A_Quartz,c("N.S."="NA", "N.D."=0.01))
+#NASGLP_USA_2007$A_Tot_K_fs <- str_replace_all(NASGLP_USA_2007$A_Tot_K_fs,c("N.S."="NA", "N.D."=0.01))
+#NASGLP_USA_2007$A_Tot_Plag <- str_replace_all(NASGLP_USA_2007$A_Tot_Plag,c("N.S."="NA", "N.D."=0.01))
+#NASGLP_USA_2007$A_Calcite <- str_replace_all(NASGLP_USA_2007$A_Calcite,c("N.S."="NA", "N.D."=0.01))
+#NASGLP_USA_2007$A_Dolomite <- str_replace_all(NASGLP_USA_2007$A_Dolomite,c("N.S."="NA", "N.D."=0.01))
 
-NASGLP_USA_2007$A_C_Inorg <-as.numeric(NASGLP_USA_2007$A_C_Inorg)
-NASGLP_USA_2007$A_C_tot <- as.numeric(NASGLP_USA_2007$A_C_Tot) 
-NASGLP_USA_2007$A_C_org <- as.numeric(NASGLP_USA_2007$A_C_Org) 
 
 NASGLP_USA_2007$A_Al <- as.numeric(NASGLP_USA_2007$A_Al)
 NASGLP_USA_2007$A_Ca <- as.numeric(NASGLP_USA_2007$A_Ca)
@@ -84,6 +84,8 @@ NASGLP_USA_2007$A_Tot_14A <- as.numeric(NASGLP_USA_2007$A_Tot_14A)
 NASGLP_USA_2007$A_Kaolinit <- as.numeric(NASGLP_USA_2007$A_Kaolinit)
 
 ```
+
+
 Our goal is to see if we can predict phyllosilicate composition with our geochemical elements of interest. The phyllosilicates of interest are: A_Tot_10A (Micas), A_Tot_14A (Expandable clays), A_Kaolinit (Our favorite 1:1)
 
 And our geochemical elements of interest are: A_Al,A_Ca, A_Fe, A_K, A_Mg, A_Na
@@ -142,12 +144,13 @@ lrn_rf <- makeLearner(cl="regr.ranger",predict.type = "response")
 ```
 
 
-Specify resampling. Specified five fold spatial cross validation. We only have two steps here: specificying a resampling method and running it. 
+Specify resampling. Specified five fold spatial cross validation. We only have two steps here: specifying a resampling method and running it. 
 
 
 ```{r}
 
 tune_level <- makeResampleDesc("SpCV",iters=5)
+
 ```
 
 Specify number of random search. Will be run within each spatially disjoint partition. 
@@ -369,7 +372,7 @@ pdp_Na_10_plot <- ggplot()+
   theme_classic()
 
 
-plot_grid(pdp_Fe_10_plot,pdp_Al_10_plot,pdp_Ca_10_plot,pdp_K_10_plot,pdp_Na_10_plot,nrow=1)
+plot_grid(pdp_Fe_10_plot,pdp_Al_10_plot,pdp_Ca_10_plot,pdp_K_10_plot,pdp_Na_10_plot,pdp_Mg_10_plot,nrow=1)
 
 pdp_Al_14_plot <- ggplot()+
   geom_line(data=pdp_Al_rf_14A,aes(x=A_Al,y=yhat),size=2)+
@@ -401,8 +404,8 @@ pdp_Na_14_plot <- ggplot()+
   ylab("")+
   theme_classic()
 
-plot_grid(pdp_Fe_10_plot,pdp_Al_10_plot,pdp_Ca_10_plot,pdp_K_10_plot,pdp_Na_10_plot,
-          pdp_Fe_14_plot,pdp_Al_14_plot,pdp_Ca_14_plot,pdp_K_14_plot,pdp_Na_14_plot,
+plot_grid(pdp_Fe_10_plot,pdp_Al_10_plot,pdp_Ca_10_plot,pdp_K_10_plot,pdp_Na_10_plot,pdp_Mg_10_plot,
+          pdp_Fe_14_plot,pdp_Al_14_plot,pdp_Ca_14_plot,pdp_K_14_plot,pdp_Na_14_plot,pdp_Mg_14_plot,
           nrow=2)
 
 
@@ -435,9 +438,9 @@ pdp_Na_K_plot <- ggplot()+
   ylab("")+
   theme_classic()
 
-plot_grid(pdp_Fe_10_plot,pdp_Al_10_plot,pdp_Ca_10_plot,pdp_K_10_plot,pdp_Na_10_plot,
-          pdp_Fe_14_plot,pdp_Al_14_plot,pdp_Ca_14_plot,pdp_K_14_plot,pdp_Na_14_plot,
-          pdp_Fe_K_plot,pdp_Al_K_plot,pdp_Ca_K_plot,pdp_K_K_plot,pdp_Na_K_plot,
+plot_grid(pdp_Fe_10_plot,pdp_Al_10_plot,pdp_Ca_10_plot,pdp_K_10_plot,pdp_Na_10_plot, pdp_Mg_10_plot,
+          pdp_Fe_14_plot,pdp_Al_14_plot,pdp_Ca_14_plot,pdp_K_14_plot,pdp_Na_14_plot,pdp_Mg_14_plot,
+          pdp_Fe_K_plot,pdp_Al_K_plot,pdp_Ca_K_plot,pdp_K_K_plot,pdp_Na_K_plot,pdp_Mg_K_plot,
           nrow=3)
 
 ```
