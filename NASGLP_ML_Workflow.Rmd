@@ -35,6 +35,7 @@ library(mlr3)
 library(mlr)
 library(ParamHelpers)
 library(pdp)
+library(blockCV)
 ```
 
 First let's read in NASGLP data. Only 2007 data has QXRD data, so we are leaving the 2004 pilot data out. 
@@ -66,11 +67,7 @@ NASGLP_USA_2007$A_Na <- str_replace_all(NASGLP_USA_2007$A_Na,c("N.S."="NA", "N.D
 NASGLP_USA_2007$A_Tot_10A <- str_replace_all(NASGLP_USA_2007$A_Tot_10A,c("N.S."="NA", "N.D."=0.01)) 
 NASGLP_USA_2007$A_Tot_14A <- str_replace_all(NASGLP_USA_2007$A_Tot_14A,c("N.S."="NA", "N.D."=0.01)) 
 NASGLP_USA_2007$A_Kaolinit <- str_replace_all(NASGLP_USA_2007$A_Kaolinit,c("N.S."="NA", "N.D."=0.01)) 
-#NASGLP_USA_2007$A_Quartz <- str_replace_all(NASGLP_USA_2007$A_Quartz,c("N.S."="NA", "N.D."=0.01))
-#NASGLP_USA_2007$A_Tot_K_fs <- str_replace_all(NASGLP_USA_2007$A_Tot_K_fs,c("N.S."="NA", "N.D."=0.01))
-#NASGLP_USA_2007$A_Tot_Plag <- str_replace_all(NASGLP_USA_2007$A_Tot_Plag,c("N.S."="NA", "N.D."=0.01))
-#NASGLP_USA_2007$A_Calcite <- str_replace_all(NASGLP_USA_2007$A_Calcite,c("N.S."="NA", "N.D."=0.01))
-#NASGLP_USA_2007$A_Dolomite <- str_replace_all(NASGLP_USA_2007$A_Dolomite,c("N.S."="NA", "N.D."=0.01))
+
 
 
 NASGLP_USA_2007$A_Al <- as.numeric(NASGLP_USA_2007$A_Al)
@@ -103,6 +100,9 @@ coords_data <- NASGLP_clean[,c("Longitude","Latitude")]
 
 data_10A <- NASGLP_clean %>%
   select(A_Al,A_Ca,A_Fe,A_K,A_Mg,A_Na,A_Tot_10A)
+
+data_10A_wcoords <- NASGLP_clean %>%
+  select(A_Al,A_Ca,A_Fe,A_K,A_Mg,A_Na,A_Tot_10A,Latitude,Longitude)
 
 data_14A  <- NASGLP_clean %>%
   select(A_Al,A_Ca,A_Fe,A_K,A_Mg,A_Na,A_Tot_14A)
@@ -183,6 +183,39 @@ makeIntegerParam("min.node.size", lower = 1, upper = 10))
 
 ```
 
+
+Using the resample function to understand how well the model is performing across the 5 folds
+
+```{r}
+
+resamp_10A <- resample("regr.ranger",task_10A,tune_level)
+
+resamp_14A <- resample("regr.ranger",task_14A,tune_level)
+
+resamp_kaolin <- resample("regr.ranger",task_kaolin,tune_level)
+
+```
+
+
+Performance is not the same across the different folds - we need to visualize the folds. Going to try and use blockCV for this
+
+
+```{r}
+
+
+set.seed(42)
+
+data_10A_sf <- st_as_sf(data_10A_wcoords,coords=c("Longitude","Latitude"),crs=st_crs(4326),remove=FALSE)
+
+block_10 <- cv_cluster(x=data_10A_sf,k=5)
+
+cv_plot(cv=block_10,
+        x=data_10A_sf)
+
+```
+
+
+
 Tuning for 10A prediction model:
 
 We need to include the learner, the task/data, the resampling methodology, the iterations for our random search, and measures of error.The optimally tuned parameters will then be the basis for our hyperparamters 
@@ -196,6 +229,9 @@ tune_10A <- tuneParams(learner=lrn_rf,
                        measures=mlr::rmse)
 
 ```
+
+
+
 
 
 
