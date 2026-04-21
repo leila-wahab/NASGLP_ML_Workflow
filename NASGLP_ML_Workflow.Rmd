@@ -146,10 +146,11 @@ lrn_rf <- makeLearner(cl="regr.ranger",predict.type = "response")
 
 Specify resampling. Specified five fold spatial cross validation. We only have two steps here: specifying a resampling method and running it. 
 
+Need to specify that we want predictions on both the training and test sets 
 
 ```{r}
 
-tune_level <- makeResampleDesc("SpCV",iters=5)
+tune_level <- makeResampleDesc("SpCV",iters=5,predict="both")
 
 ```
 
@@ -184,15 +185,20 @@ makeIntegerParam("min.node.size", lower = 1, upper = 10))
 ```
 
 
-Using the resample function to understand how well the model is performing across the 5 folds
+Using the resample function to understand how well the model is performing across the 5 folds for both training and testing data 
 
 ```{r}
 
-resamp_10A <- resample("regr.ranger",task_10A,tune_level)
+resamp_10A <- resample("regr.ranger",task_10A,tune_level,measures=list(expvar,rmse))
 
-resamp_14A <- resample("regr.ranger",task_14A,tune_level)
+resamp_14A <- resample("regr.ranger",task_14A,tune_level,measures=list(expvar,rmse))
 
-resamp_kaolin <- resample("regr.ranger",task_kaolin,tune_level)
+resamp_kaolin <- resample("regr.ranger",task_kaolin,tune_level,measures=list(expvar,rmse))
+
+# creating spatially disparate blocks 
+
+cv_block_size(x = data_10A_sf,
+               column = "A_Tot_10A")
 
 ```
 
