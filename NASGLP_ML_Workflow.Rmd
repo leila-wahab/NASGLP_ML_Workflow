@@ -36,6 +36,7 @@ library(mlr)
 library(ParamHelpers)
 library(pdp)
 library(blockCV)
+library(mlr3spatiotempcv)
 ```
 
 First let's read in NASGLP data. Only 2007 data has QXRD data, so we are leaving the 2004 pilot data out. 
@@ -104,6 +105,12 @@ data_10A <- NASGLP_clean %>%
 data_10A_wcoords <- NASGLP_clean %>%
   select(A_Al,A_Ca,A_Fe,A_K,A_Mg,A_Na,A_Tot_10A,Latitude,Longitude)
 
+data_10A_wcoords$Latitude <- as.numeric(data_10A_wcoords$Latitude)
+data_10A_wcoords$Longitude <- as.numeric(data_10A_wcoords$Longitude)
+
+data_10A_sf <-  st_as_sf(data_10A_wcoords, coords = c("Longitude", "Latitude"), crs = 4326, remove = FALSE)
+
+
 data_14A  <- NASGLP_clean %>%
   select(A_Al,A_Ca,A_Fe,A_K,A_Mg,A_Na,A_Tot_14A)
 
@@ -125,7 +132,7 @@ task_14A <- makeRegrTask(data=data_14A,target = "A_Tot_14A", coordinates = coord
 
 task_kaolin <- makeRegrTask(data=data_kaolin,target = "A_Kaolinit", coordinates = coords_data)
 
-
+#spatial_task_10A <- as_task_regr_st(data_10A_wcoords,"A_Tot_10A",coordinate_names = c("Longitude", "Latitude"),crs=4326)
 
 ```
 
@@ -151,6 +158,7 @@ Need to specify that we want predictions on both the training and test sets
 ```{r}
 
 tune_level <- makeResampleDesc("SpCV",iters=5,predict="both")
+
 
 ```
 
@@ -199,6 +207,16 @@ resamp_kaolin <- resample("regr.ranger",task_kaolin,tune_level,measures=list(exp
 
 cv_block_size(x = data_10A_sf,
                column = "A_Tot_10A")
+
+
+random_blocks <- cv_spatial(x = data_10A_sf,
+                  column = "A_Tot_10A",
+                  k = 5, 
+                  size = 150000, 
+                  hexagon = FALSE, # use square blocks
+                  selection = "systematic",
+                  iteration = 50, 
+                  biomod2 = TRUE)
 
 ```
 
